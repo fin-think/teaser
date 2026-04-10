@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myCHECKLIST - Age 40-50 Unlocked</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .text-mobile-sm { font-size: 0.95rem; }
+        .text-mobile-xs { font-size: 0.85rem; }
+
+        .checkbox-custom:checked + label .check-box { background-color: #10b981; border-color: #10b981; }
+        .checkbox-custom:checked + label .check-icon { display: block; }
+        .checkbox-custom:checked + label .text-content { text-decoration: line-through; opacity: 0.5; }
+        
+        @keyframes pulse-red {
+            0%, 100% { background-color: rgba(239, 68, 68, 0.1); }
+            50% { background-color: rgba(239, 68, 68, 0.2); }
+        }
+        .urgent-bg { animation: pulse-red 2s infinite; }
+        
+        .bonus-badge {
+            background: linear-gradient(45deg, #f59e0b, #fbbf24);
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+        }
+
+        .solution-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .asset-solution-card { background: linear-gradient(135deg, #334155 0%, #1e293b 100%); border-left: 4px solid #f59e0b; }
+        .legacy-solution-card { background: linear-gradient(135deg, #451a03 0%, #290c00 100%); border-left: 4px solid #f97316; }
+
+        /* Blur & Lock Effects */
+        .blur-locked { 
+            filter: blur(5px); 
+            pointer-events: none; 
+            user-select: none;
+            opacity: 0.6;
+        }
+        .lock-wrapper { position: relative; overflow: hidden; }
+        .lock-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(15, 23, 42, 0.2); z-index: 10;
+            padding: 20px;
+        }
+
+        /* Modal Animation */
+        .modal-active { opacity: 1 !important; pointer-events: auto !important; transform: scale(1) !important; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen py-6 px-4 flex flex-col items-center">
+
+    <div class="w-full max-w-md md:max-w-xl">
+        <div class="mb-4 text-center">
+            <span class="text-[12px] font-black uppercase tracking-widest text-slate-500">Pilih Kategori Umur</span>
+        </div>
+        
+        <!-- Age Selector -->
+        <div class="mb-8 flex bg-white p-2 rounded-2xl shadow-md border border-slate-200">
+            <button onclick="setAgeGroup('20-30')" id="btn-20-30" class="flex-1 py-4 rounded-xl font-extrabold text-sm transition-all age-btn bg-blue-600 text-white shadow-lg">20-30</button>
+            <button onclick="showLockModal('30-40')" id="btn-30-40" class="flex-1 py-4 rounded-xl font-extrabold text-sm transition-all age-btn text-slate-400 flex items-center justify-center gap-2">
+                30-40 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </button>
+            <button onclick="setAgeGroup('40-50')" id="btn-40-50" class="flex-1 py-4 rounded-xl font-extrabold text-sm transition-all age-btn text-slate-600">40-50</button>
+        </div>
+
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
+            <!-- Header Section -->
+            <div class="bg-slate-900 p-8 text-white relative">
+                <div class="flex justify-between items-start mb-1">
+                    <h1 class="text-2xl font-black tracking-tighter italic text-blue-400">FINANCE HEALTH</h1>
+                    <div id="bonusIndicator" class="hidden bonus-badge text-[9px] font-black px-2 py-1 rounded-full text-slate-900 animate-bounce uppercase">Legacy Bonus Active</div>
+                </div>
+                <p id="ageGroupLabel" class="text-white text-[11px] font-black uppercase tracking-[0.3em] mb-8 opacity-80"></p>
+                
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex-shrink-0">
+                        <span class="text-[11px] font-black uppercase tracking-widest opacity-40 block mb-1">Health Score</span>
+                        <span id="percentageText" class="text-5xl font-black tabular-nums tracking-tighter">0%</span>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="h-3 bg-white/10 rounded-full mb-3 overflow-hidden">
+                            <div id="progressBar" class="h-full bg-blue-500 transition-all duration-700 ease-out" style="width: 0%"></div>
+                        </div>
+                        <span id="statusBadge" class="text-[11px] font-black py-1.5 px-4 rounded-full border uppercase tracking-widest">Kritikal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checklist Section -->
+            <div id="checklistContent" class="p-6 space-y-10"></div>
+
+            <!-- Summary & Solutions Area -->
+            <div id="summaryArea" class="px-6 pb-10 space-y-6 border-t border-slate-50 pt-8">
+                
+                <div id="incomeSolutionBox" class="solution-card rounded-[2rem] p-6 text-white hidden shadow-2xl">
+                    <div class="flex items-center mb-4">
+                        <div class="p-2 bg-blue-500 rounded-lg mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <h4 class="font-black text-mobile-sm uppercase tracking-tight text-blue-400">Strategi Pendapatan</h4>
+                    </div>
+                    <p class="text-[13px] font-bold leading-relaxed mb-4 text-slate-300">
+                        Gaji anda belum mencapai target minimum fasa umur ini.
+                    </p>
+                </div>
+
+                <div id="assetSolutionBox" class="lock-wrapper hidden">
+                    <div class="asset-solution-card rounded-[2rem] p-6 text-white shadow-xl blur-locked">
+                        <div class="flex items-center mb-4 text-amber-400 uppercase font-black text-xs tracking-widest">Analisis Portfolio</div>
+                        <p class="text-xs">Data Pelaburan Strategik dikunci...</p>
+                    </div>
+                    <div class="lock-overlay rounded-[2rem]">
+                        <button onclick="showLockModal('Analisis Aset')" class="bg-white text-slate-900 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-tight shadow-2xl border active:scale-95 transition-transform">
+                            🔒 Unlock Analisis Penuh
+                        </button>
+                    </div>
+                </div>
+
+                <div id="legacySolutionBox" class="lock-wrapper hidden">
+                    <div class="legacy-solution-card rounded-[2rem] p-6 text-white shadow-xl blur-locked">
+                        <div class="flex items-center mb-4 text-orange-400 uppercase font-black text-xs tracking-widest">Harta & Legacy</div>
+                        <p class="text-xs">Pengurusan Wasiat & Hibah dikunci...</p>
+                    </div>
+                    <div class="lock-overlay rounded-[2rem]">
+                        <button onclick="showLockModal('Pengurusan Legacy')" class="bg-white text-slate-900 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-tight shadow-2xl border active:scale-95 transition-transform">
+                            🔒 Unlock Analisis Penuh
+                        </button>
+                    </div>
+                </div>
+
+                <div id="warningBox" class="urgent-bg border-2 border-red-200 rounded-[2rem] p-6 hidden">
+                    <h4 class="text-red-700 font-black text-mobile-sm uppercase tracking-tight mb-4 text-center">Tindakan Segera</h4>
+                    <div id="missingItems" class="flex flex-wrap justify-center gap-2"></div>
+                </div>
+
+                <div id="successBox" class="bg-emerald-50 border-2 border-emerald-200 rounded-[2rem] p-6 hidden text-center">
+                    <h4 class="font-black text-emerald-700 text-mobile-sm uppercase tracking-widest">Tahniah! Kewangan Stabil</h4>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 bg-slate-50 border-t border-slate-100">
+                <div class="flex justify-between items-center mb-4">
+                    <p class="text-[11px] text-slate-400 font-black uppercase" id="currentDate"></p>
+                    <p class="text-[11px] text-slate-900 font-black uppercase italic tracking-tighter"></p>
+                <!-- Disclaimer -->
+                <div class="p-4 bg-slate-200/50 rounded-2xl">
+                    <p class="text-[9px] text-slate-500 font-bold uppercase leading-tight tracking-wider">
+                        <span class="text-slate-700">PENAFIAN:</span> Maklumat yang disediakan dalam aplikasi ini adalah untuk tujuan rujukan dan perancangan peribadi sahaja. Ia tidak membentuk nasihat kewangan rasmi, undang-undang atau pelaburan. Sila rujuk perunding bertauliah untuk keputusan kewangan profesional.
+                    </p>
+                                 
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal Popup -->
+    <div id="customModal" class="fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl transform scale-90 transition-all duration-300">
+            <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 text-center uppercase tracking-tight mb-2">Akses Dikunci</h3>
+            <p id="modalMsg" class="text-sm text-slate-500 text-center font-bold mb-8 leading-relaxed">Dapatkan pakej penuh untuk membuka akses bagi bahagian ini.</p>
+            <button onclick="closeModal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg hover:bg-blue-700 active:scale-95 transition-all">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        const config = {
+            "20-30": {
+                label: "FASA PEMBINAAN: 20-30 TAHUN",
+                sections: [
+                    { isBonus: false, isIncome: true, isAsset: false, title: "Income & Savings", items: ["Gaji Minimum (Basic RM2.5k+)", "Tunai Kecemasan (3 bln Gaji)", "Simpanan KWSP RM26k (Umur 30)"] },
+                    { isBonus: false, isIncome: false, isAsset: true, title: "Protection & Assets", items: ["ASB/ Tabung Haji (Min RM10k)", "Emas Fizikal/ Digital (Min 10g)", "Insurans Perubatan (Medical Card)"] },
+                    { isBonus: true, isIncome: false, isAsset: false, title: "Legacy (Bonus Points)", items: ["Penyediaan Wasiat", "Hibah Takaful", "Harta Sepencarian"] }
+                ]
+            },
+            "40-50": {
+                label: "FASA PENGUKUHAN: 40-50 TAHUN",
+                sections: [
+                    { isBonus: false, isIncome: true, isAsset: false, title: "Income & Stability", items: ["Gaji Minimum (Basic RM8k+)", "Passive Income", "Tunai Kecemasan (12 bln Gaji)", "Simpanan KWSP RM150k (Umur 50)"] },
+                    { isBonus: false, isIncome: false, isAsset: true, title: "Assets & Debt Free", items: ["ASB/ Tabung Haji (Min RM50k)", "Emas Fizikal/ Digital (Min 100g)", "Insuran Perubatan + Life", "Unit Trust (Min RM150k)", "Hartanah Kediaman"] },
+                    { isBonus: true, isIncome: false, isAsset: false, title: "Legacy & Retirement", items: ["Wasiat (Draft Terkini)", "Hibah Takaful", "Hibah Harta", "Harta Sepencarian", "Tunai Amanah (Cash Trust)"] }
+                ]
+            }
+        };
+
+        function showLockModal(target) {
+            document.getElementById('modalMsg').innerText = `Bahagian "${target}" ini dikunci. Dapatkan akses penuh!`;
+            const modal = document.getElementById('customModal');
+            modal.classList.add('modal-active');
+            modal.children[0].classList.add('scale-100');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('customModal');
+            modal.classList.remove('modal-active');
+            modal.children[0].classList.remove('scale-100');
+        }
+
+        let currentAgeGroup = "20-30";
+
+        function setAgeGroup(group) {
+            currentAgeGroup = group;
+            
+            // Update UI Buttons
+            document.querySelectorAll('.age-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`btn-${group}`);
+            activeBtn.classList.remove('text-slate-400');
+            activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
+
+            document.getElementById('ageGroupLabel').innerText = config[group].label;
+            renderChecklist();
+            updateStatus();
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklistContent');
+            container.innerHTML = '';
+            
+            config[currentAgeGroup].sections.forEach((section, sIdx) => {
+                const sectionEl = document.createElement('div');
+                const titleColor = section.isBonus ? 'text-amber-500' : 'text-blue-600';
+                const borderColor = section.isBonus ? 'border-amber-500' : 'border-blue-600';
+                
+                sectionEl.innerHTML = `
+                    <h3 class="text-[11px] font-black uppercase tracking-[0.2em] ${titleColor} mb-5 border-l-4 ${borderColor} pl-3">
+                        ${section.title}
+                    </h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        ${section.items.map((item, iIdx) => {
+                            const isIncomeMin = section.isIncome && iIdx === 0;
+                            const isAssetItem = section.isAsset;
+                            return `
+                                <div class="group relative">
+                                    <input type="checkbox" id="cb-${sIdx}-${iIdx}" 
+                                           data-bonus="${section.isBonus}" 
+                                           data-income-min="${isIncomeMin}"
+                                           data-is-asset="${isAssetItem}"
+                                           class="checkbox-custom hidden" onchange="updateStatus()">
+                                    <label for="cb-${sIdx}-${iIdx}" class="flex items-center p-5 rounded-[1.5rem] border-2 border-slate-100 bg-white hover:border-blue-200 transition-all cursor-pointer shadow-sm active:scale-[0.98]">
+                                        <span class="text-content text-mobile-xs font-extrabold text-slate-700 flex-1 uppercase tracking-tight">${item}</span>
+                                        <div class="check-box w-6 h-6 rounded-lg border-2 border-slate-200 flex items-center justify-center transition-all bg-slate-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="check-icon hidden w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                    </label>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(sectionEl);
+            });
+        }
+
+        function updateStatus() {
+            const coreCheckboxes = document.querySelectorAll('.checkbox-custom[data-bonus="false"]');
+            const bonusCheckboxes = document.querySelectorAll('.checkbox-custom[data-bonus="true"]');
+            const incomeMinCheckbox = document.querySelector('.checkbox-custom[data-income-min="true"]');
+            const assetCheckboxes = document.querySelectorAll('.checkbox-custom[data-is-asset="true"]');
+            
+            const coreChecked = document.querySelectorAll('.checkbox-custom[data-bonus="false"]:checked');
+            const bonusChecked = document.querySelectorAll('.checkbox-custom[data-bonus="true"]:checked');
+            const assetsChecked = document.querySelectorAll('.checkbox-custom[data-is-asset="true"]:checked');
+            
+            const corePercentage = Math.round((coreChecked.length / coreCheckboxes.length) * 100);
+            const totalScore = corePercentage + (bonusChecked.length * 5);
+            
+            document.getElementById('percentageText').innerText = totalScore + "%";
+            document.getElementById('progressBar').style.width = Math.min(totalScore, 100) + "%";
+            
+            document.getElementById('bonusIndicator').classList.toggle('hidden', bonusChecked.length === 0);
+
+            // Solution Boxes
+            document.getElementById('incomeSolutionBox').classList.toggle('hidden', !(incomeMinCheckbox && !incomeMinCheckbox.checked));
+            document.getElementById('assetSolutionBox').classList.toggle('hidden', !(assetCheckboxes.length > 0 && assetsChecked.length === 0));
+            document.getElementById('legacySolutionBox').classList.toggle('hidden', !(bonusCheckboxes.length > 0 && bonusChecked.length === 0));
+
+            // Badge
+            const badge = document.getElementById('statusBadge');
+            if (corePercentage < 50) {
+                badge.innerText = "Kritikal";
+                badge.className = "text-[10px] font-black py-1.5 px-4 bg-red-500 text-white rounded-full uppercase tracking-widest";
+            } else if (corePercentage < 100) {
+                badge.innerText = "Waspada";
+                badge.className = "text-[10px] font-black py-1.5 px-4 bg-amber-500 text-white rounded-full uppercase tracking-widest";
+            } else {
+                badge.innerText = "Selamat";
+                badge.className = "text-[10px] font-black py-1.5 px-4 bg-emerald-500 text-white rounded-full uppercase tracking-widest";
+            }
+
+            // Warnings vs Success
+            const warningBox = document.getElementById('warningBox');
+            const successBox = document.getElementById('successBox');
+            if (corePercentage < 100) {
+                warningBox.classList.remove('hidden');
+                successBox.classList.add('hidden');
+                const missingContainer = document.getElementById('missingItems');
+                missingContainer.innerHTML = '';
+                coreCheckboxes.forEach(cb => {
+                    if (!cb.checked) {
+                        const labelText = cb.nextElementSibling.querySelector('.text-content').innerText;
+                        const tag = document.createElement('span');
+                        tag.className = "text-[9px] font-black bg-red-600 text-white px-2 py-1 rounded-md tracking-tight uppercase shadow-sm";
+                        tag.innerText = labelText;
+                        missingContainer.appendChild(tag);
+                    }
+                });
+            } else {
+                warningBox.classList.add('hidden');
+                successBox.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('currentDate').innerText = "KEMASKINI: " + new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+        setAgeGroup('20-30');
+    </script>
+</body>
+</html>
